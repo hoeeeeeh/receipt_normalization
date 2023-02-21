@@ -1,0 +1,32 @@
+version: "3"
+services:
+  #front 
+  front:
+    #image: receipt:front
+    build:
+      context: WebFront
+      dockerfile: ./Dockerfile
+    restart: always
+    container_name : receipt-front
+    ports:
+      - "6001:6001"
+    networks:
+      - receipt
+    
+
+  backend:
+    #image: receipt-backend
+    build:
+      context: receipt_backend
+      dockerfile: ./Dockerfile
+    restart: always
+    container_name : receipt-backend
+    ports:
+      - "6002:6002"
+    networks:
+      - receipt
+   
+networks:
+  receipt:
+    driver: bridge 
+
