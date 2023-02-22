@@ -98,25 +98,24 @@ qa = re.compile("( |^)(\d+\.\d{1,2}|\d{1,2}|!|I) (\d{0,3}[,.]\d{3}|0|\d{1,3}[,.]
 qda = re.compile(
     "( |^)(\d+\.\d{1,2}|\d{1,2}|!|I) (\d*[,.]\d{3}|0) (\d{0,3}[,.]\d{3}|0|\d{1,3}[,.]\d{1,3}[,.]\d{3}|\d{0,3}\d{3}원)($| )")
 
-# 컬럼 유형별 : 컴파일러, 수량 추출 위치, 금액 추출 위치 저장
-do_aqa = {'compiler': aqa, 'quant': 3, 'amount': 4}
-do_aq = {'compiler': aq, 'quant': 3, 'amount': 2}
-do_qa = {'compiler': qa, 'quant': 2, 'amount': 3}
-do_qda = {'compiler': qda, 'quant': 2, 'amount': 4}
+# 컬럼 유형별 : 컴파일러, 수량 추출 위치, 금액 추출 위치 저장 
+do_aqa = {'compiler':aqa, 'quant': 3, 'amount': 4}
+do_aq = {'compiler':aq, 'quant': 3, 'amount': 2}
+do_qa = {'compiler':qa, 'quant': 2, 'amount': 3}
+do_qda = {'compiler':qda, 'quant': 2, 'amount': 4}
 
-dowhat = {'aqa': do_aqa, 'aq': do_aq, 'qa': do_qa, 'qda': do_qda}
+dowhat = {'aqa':do_aqa, 'aq':do_aq, 'qa':do_qa, 'qda':do_qda}
+
 
 # 제외 용도
-cols = re.compile('수 ?량|소 ?계|금 ?액|내 ?역|기타 \(\d+|진료 \(\d+|용품 \(\d+|입원 \(\d+|백신 \(\d+|미용 \(\d+')  # 컬럼 및 소목차
-lessormore = re.compile('\(C:|\(P:|(?<!\S)[-\+](\d+[,.])?\d{3}(?!\S)|\(\d*[,.]\d{3}\)')  # 할인/이벤트 line 구분
-toolow = re.compile('비과세(?!\))|사업자|대 ?표 ?자|담 ?당 ?자?|수의사|고객|동물명|\d{4}-\d{2}-\d{2}|결 ?제|\[20\d{7}\]')  # 무관한 line 구분
-endhere = re.compile('청 ?구 ?금 ?액|총 ?액|총 ?금 ?액|^합 ?계|영 ?수 ?액|부 ?가 ?세[ 액]|과세 ?품목 ?합계|표시가 되어 있는')  # 진단 추출 끝낼 지점 지정
+cols = re.compile('수 ?량|소 ?계|금 ?액|내 ?역|기타 \(\d+|진료 \(\d+|용품 \(\d+|입원 \(\d+|백신 \(\d+|미용 \(\d+') # 컬럼 및 소목차
+lessormore = re.compile('^ ?할인 ?$|\(C:|\(P:|(?<!\S)[-\+](\d+[,.])?\d{3}(?!\S)|\(\d*[,.]\d{3}\)') # 할인/이벤트 line 구분
+toolow = re.compile('비과세(?!\))|사업자|대 ?표 ?자|담 ?당 ?자?|수의사|고객|동물명|\d{4}-\d{2}-\d{2}|결 ?제|\[20\d{7}\]') # 무관한 line 구분
+endhere = re.compile('청 ?구 ?금 ?액|총 ?액|총 ?금 ?액|^합 ?계|영 ?수 ?액|부 ?가 ?세[ 액]|과세 ?품목 ?합계|표시가 되어 있는') # 진단 추출 끝낼 지점 지정
 
-# 동물명
-name_type = '(?<![가-힣])동물명(?!원) ?:? ?([가-힣]+)|동물이름 ?:? ?([가-힣]+)| ?\(?([가-힣]+)[a-zA-Z]* ?\[\d{8,9}]?'
-name = re.compile('(?<![가-힣])동물명(?!원) ?:? ?([가-힣]+)|동물이름 ?:? ?([가-힣]+)| ?\(?([가-힣]+)[a-zA-Z]* ?\[\d{8,9}]?')
-# name with date
-name_d = re.compile(' ?\(?([가-힣]+)[a-zA-Z]*?\[\d{8,9}]?')
+# 동물명 
+name_type = '(?<![가-힣])동물명(?!원) ?:? ?([가-힣]+)|동물이름 ?:? ?([가-힣]+)| ?\(?([가-힣]+)[a-zA-Z]* ?\[\d{8,9}\]?'
+name = re.compile('(?<![가-힣])동물명(?!원) ?:? ?([가-힣]+)|동물이름 ?:? ?([가-힣]+)| ?\(?([가-힣]+)[a-zA-Z]* ?\[\d{8,9}\]?')
 
 # 위의 컴파일러들 ("윗줄" 연결 여부 결정에 사용)
 nope = [aqa, qa, aq, qda, cols, lessormore, toolow]
@@ -150,8 +149,8 @@ def parse_receipt_to_json(json_file):
     with open(file_path, 'w') as outfile:
         json.dump(json_file, outfile)
 
-    global Satze_dft, Words_dft, keys
-    global this_receipt, Desc, Quant, Amount, Name, label
+    global Satze_dft, keys
+    global this_receipt, Desc, Quant, Amount, Name, image
 
     Satze_dft, Words_dft = data_load_into_df(file_path)
     keys = get_keywords()
@@ -171,53 +170,50 @@ def parse_receipt_to_json(json_file):
 
     for j, satz in enumerate(Satze_dft[receipt].dropna()):  # FOR on Satze_dft[ receipt ][ j ]
 
+        # 진단내역 지난 후의 line일 경우 => 해당 영수증 검수 
+        if endhere.search(satz) is not None:
+            break
+            
         # 1) 동물 이름
-        if re.search(name_type, satz):
+        petname = ''   # 없는 경우 대비
+        if re.search( name_type , satz):
             matched = name.search(satz).group()
-            petname = re.sub('.*동물(명|이름) ?:? ?|^\(|\(|[a-zA-Z]* ?\[\d{8,9}\]?', '', matched).strip()
-
-            # 2) 항목 유형별 [진단/수량/금액] 처리
+            petname = re.sub(  '.*동물(명|이름) ?:? ?|^\(|\(|[a-zA-Z]* ?\[\d{8,9}\]?'  , '', matched  ).strip() 
+        
+        # 2) 항목 유형별 [진단/수량/금액] 처리
         # 무의미 line 아닌 경우에만
         elif realcolname(satz):
             compiler_name = realcolname(satz)
-
-            Name, Desc, Quant, Amount = get_NDQA(compiler_name, receipt, j, petname)
-
+            Name, Desc, Quant, Amount = get_NDQA(compiler_name , receipt, j, petname)
+            
             row_label = []
-            row_desc = []
+            row_desc = ''
 
             # 여러 줄에 흩어져 있는 진단들 한 줄로 모으기 (단어 단위로)
             for i in rows:
-                row_desc = row_desc + list(Words_dft[receipt][i])
+                row_desc = row_desc + ' ' + Satze_dft[ receipt ][ i ].lower()
 
             # 진단 단어들 => Keywords.json 단어 목록과 비교
-            for d in [z.lower() for z in row_desc]:
-                for realword in list(keys.index):
-
-                    if (realword in d) & (type(keys['label'][realword]) == str):
-                        if (len(set(row_label).intersection(fam)) > 0) & (keys['label'][realword] in fam):
-                            pass
-
-                        else:
-                            row_label = row_label + [keys['label'][realword]]
-
-                    elif (realword in d) & (type(keys['label'][realword]) != str):
-                        row_label = row_label + list(keys['label'][realword])
+            d = re.sub('\s+', ' ', row_desc)
+            
+            for realword in list(keys.index):
+                if (realword in d) & (type(keys['label'][realword]) == str):
+                    if (( len(set( row_label ).intersection( fam )) > 0 ) & ( keys['label'][realword] in fam)) | (keys['label'][realword] in row_label):
+                        pass
+                        
+                    else:
+                        row_label = row_label + [ keys['label'][realword] ]
+                            
+                elif (realword in d) & (type(keys['label'][realword]) != str):
+                    row_label = row_label + list( keys['label'][realword] )
 
             pet_label.append(list(set(row_label)))
-            # 진단내역 지난 후의 line일 경우 => 해당 영수증 검수 종료
-
-        if endhere.search(satz) is not None:
-            break
 
     df_new = pd.DataFrame(
         {'receipt': [receipt] * len(Desc), 'Name': Name, 'Desc': Desc, 'Quant': Quant, 'Amount': Amount})
     thisreceipt = pd.concat([thisreceipt, df_new]).reset_index().iloc[:, 1:]
     labeled_receipt = pd.DataFrame(
         {'receipt': [receipt] * len(Desc), 'Name': Name, 'Desc': pet_label, 'Quant': Quant, 'Amount': Amount})
-
-    # 다음 영수증 처리 위해 name 초기화
-    petname = ''
 
     print(thisreceipt)
     print(labeled_receipt)
@@ -237,29 +233,19 @@ def data_load_into_df(json_path):
     with open(json_path, 'r') as f:
         pet = json.load(f)
 
-    words_in = []
-    words = []
-
     this_pet_txts = []
     satz = ''
 
     for i, j in enumerate(pet.get('images')[0].get('fields')):
 
-        words.append(j.get('inferText'))
-
         satz += j.get('inferText') + ' '
         if j.get('lineBreak'):
             this_pet_txts.append(satz)
-
-            words_in.append(words)
-
-            words = []
             satz = ''
 
     Satze_df = pd.DataFrame(this_pet_txts).rename(columns={0: receipt})
-    Words_df = pd.DataFrame([words_in]).T.rename(columns={0: receipt})
 
-    return Satze_df, Words_df
+    return Satze_df
 
 
 # 윗줄 포함 여부 판단
@@ -267,7 +253,7 @@ def data_load_into_df(json_path):
 def upper(compiler, receipt, row_no):
     if row_no > 0:
         upperrow = Satze_dft[receipt][row_no]
-        if sum([True if (n.search(upperrow) is None) else False for n in nope]) == len(nope):
+        if sum([True if (n.search( upperrow ) is None) else False for n in nope]) == len(nope):
             return True
         else:
             return False
@@ -278,13 +264,14 @@ def upper(compiler, receipt, row_no):
 # 윗줄 포함 여부 결정 후 desc 내용 확정
 
 def withupperline(compiler, receipt, j):
+    
     global rows
     rows = []
+    
+    satz = Satze_dft[ receipt ][ j ]
 
-    satz = Satze_dft[receipt][j]
-
-    desc = satz[: compiler.search(satz).start()].strip()  # 지금 line j의 진단내용
-    desc = re.sub('[( )]\d*,\d{3}[( ))]', ' ', desc)  # <-- 1) 진단에서 금액부분 제거
+    desc = satz[ : compiler.search(satz).start() ].strip()  # 지금 line j의 진단내용
+    desc = re.sub('[( )]\d*,\d{3}[( ))]', ' ', desc)     # <-- 1) 진단에서 금액부분 제거
     rows.append(j)
 
     # 윗줄의 진단내용 연결
@@ -303,7 +290,7 @@ def withupperline(compiler, receipt, j):
         rows.append(j - 2)
 
     desc = re.split('(^ |^|^\)) ?(\*|\-|\+)+', desc)[-1].strip()  # *으로 시작하는 비과세항목, 글머리기호 -/+ - */-/+ 부분 제거
-    desc = re.sub('\d{6,}', '', desc).strip()  # 6개 이상 연속 숫자 제거
+    desc = re.sub('\d{6,}|!!|\|\|', '', desc).strip()   # 6개 이상 연속 숫자 제거
 
     rows = sorted(rows)
 
@@ -311,45 +298,46 @@ def withupperline(compiler, receipt, j):
 
 
 def get_NDQA(compiler_name, receipt, j, petname):
-    satz = Satze_dft[receipt][j]
-
+    
+    satz = Satze_dft[ receipt ][ j ]
+    
     # 수량 Quantity + labeling
-    quant = dowhat[compiler_name]['compiler'].search(satz).group(dowhat[compiler_name]['quant'])
+    quant = dowhat[ compiler_name ]['compiler'].search(satz).group( dowhat[ compiler_name ]['quant'] )
     quant = re.sub('!|I', '1', quant)
-
+    
     # 금액 Amount + labeling
-    amount = dowhat[compiler_name]['compiler'].search(satz).group(dowhat[compiler_name]['amount'])
-
+    amount = dowhat[ compiler_name ]['compiler'].search(satz).group( dowhat[ compiler_name ]['amount'] )
+    
     # 진단 Description + labeling
-    desc = withupperline(dowhat[compiler_name]['compiler'], receipt, j)
-
-    Name.append(petname)
-    Desc.append(desc)
-    Quant.append(quant)
-    Amount.append(amount)
-
+    desc = withupperline( dowhat[ compiler_name ]['compiler'] , receipt, j )
+    
+    Name.append( petname )
+    Desc.append( desc )
+    Quant.append( quant )
+    Amount.append( amount )
+    
     return Name, Desc, Quant, Amount
 
 
 # 영수증의 "컬럼 형식" 파악하고 그에 따라 적합한 [컴파일러 이름] 할당
 def typeofcols(receipt):
-    coltype = {"단가수량금액": 'aqa', "수량금액DC": 'qa', "수량할인금액": 'qda'}
+    coltype = {"단가수량금액" : 'aqa', "수량금액DC" : 'qa', "수량할인금액" : 'qda'}
     for typ in coltype:
-        if typ in re.sub('\s', '', ' '.join(Satze_dft[receipt].dropna())):
+        if typ in re.sub('\s', '', ' '.join(Satze_dft[ receipt ].dropna())):
             return coltype[typ]
     return 'qa'
 
 
 # 수량, 금액이 실제로 나타난 형식에 따라 적합한 [컴파일러 이름] 할당
 def realcolname(satz):
-    if (lessormore.search(satz) is None) & (toolow.search(satz) is None) & (cols.search(satz) is None):
-        if aqa.search(satz) is not None:
+    if (lessormore.search(satz) is None) & (toolow.search(satz) is None) & (cols.search(satz) is None): 
+        if aqa.search(satz) is not None : 
             return 'aqa'
-        elif aq.search(satz) is not None:  # 해당 줄의 금액 부분 안 읽힌 경우
+        elif aq.search(satz) is not None : # 해당 줄의 금액 부분 안 읽힌 경우
             return 'aq'
         elif qda.search(satz) is not None:
             return 'qda'
-        elif qa.search(satz) is not None:  # 해당 줄의 단가 부분 안 읽힌 경우
+        elif qa.search(satz) is not None : # 해당 줄의 단가 부분 안 읽힌 경우
             return 'qa'
         else:
             return False
