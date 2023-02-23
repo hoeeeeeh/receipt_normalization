@@ -85,6 +85,253 @@ def ocr_jpg():
     return parse_receipt_to_json(response)
 
 
+###### 병원 정보 ######
+
+# 정규식을 받아서 해당 내용을 지우는 함수 + 다중공백 제거
+def Remover(regex, data_save):
+    # 지워진거 따로 반환하기
+    data_save = re.sub(regex, " ", data_save)
+    data_save = Remove_Multiple_Space(data_save)
+    return data_save
+
+# 다중공백 제거 전용함수(2개 이상의 공백 제거)
+def Remove_Multiple_Space(data_save):
+    data_save = re.sub(" {2,}", " ", data_save)
+    return data_save
+
+# CSV file 을 DF으로 전환
+def csv_to_data(csv_file):
+    df = pd.read_csv(csv_file, header=0)
+    dataset = df.values
+    return dataset
+
+# final_hosp_info.csv 의 동물병원 DB와 비교하여 DB의 정보로 치환
+def check_hospital_info(sub_data):
+    hospital_info = csv_to_data('./final_hosp_info.csv')
+    regi_number = sub_data[0]
+    number = re.sub("^0", "", str(sub_data[1]))
+    address = sub_data[2]
+    hospital_name = sub_data[3]
+
+    if regi_number in hospital_info and regi_number != '':
+        try:
+            index = np.where(regi_number == hospital_info)
+            address = hospital_info[int(index[0])][2]
+            hospital_name = hospital_info[int(index[0])][0]
+            if number != '':
+                pass
+            else:
+                number = str(0) + str(hospital_info[int(index[0])][1])
+            return regi_number, number, address, hospital_name
+        except:
+            return regi_number, number, address, hospital_name
+
+    elif number in hospital_info and number != '':
+        try:
+            index = np.where(number == hospital_info)
+            address = hospital_info[int(index[0])][2]
+            hospital_name = hospital_info[int(index[0])][0]
+            if regi_number != '':
+                pass
+            else:
+                regi_number = hospital_info[int(index[0])][3]
+            return regi_number, str(sub_data[1]), address, hospital_name
+        except:
+            return regi_number, number, address, hospital_name
+
+    else:
+        return regi_number, number, address, hospital_name
+
+
+# 병원명
+def Hospital_name(data_save):
+    hospital_name = []
+    regex_1 = " ?병 ?원 ?명 ?:? ?(2? ?4?시? ?[가-힣 24]{2,}병 ?원 ?2? ?4? ?시?) ?"
+    regex_2 = " ?청 ?구 ? ?원 ?명 ?:? ?(2? ?4?시? ?[가-힣 24]{2,}병 ?원 ?2? ?4? ?시?) ?"
+    regex_3 = " ?병 ?원 ?명 ?:? ?(2? ?4?시? ?[가-힣 24]{2,}센 ?터 ?2? ?4? ?시?) ?"
+    regex_4 = " ?청 ?구 ? ?원 ?명 ?:? ?(2? ?4?시? ?[가-힣 24]{2,}센 ?터 ?2? ?4? ?시?) ?"
+    regex_5 = " ?병 ?원 ?명 ?:? ?"
+    regex_6 = " ?청 ?구 ?원 ?명 ?:? ?"
+    regex_7 = "[가-힣]+ 동 ?물 ?병 ?원 ?"
+    regex_8 = " ?(2?4? ?시? ?[가-힣]{0,} ?2?4?시? ?V?I?P?N? ?[가-힣]+센 ?터 ?)"
+
+    hospital_name_1 = re.findall(regex_1, data_save)
+    hospital_name.extend(hospital_name_1)
+    data_save = Remover(regex_1, data_save)
+
+    hospital_name_2 = re.findall(regex_2, data_save)
+    hospital_name.extend(hospital_name_2)
+    data_save = Remover(regex_2, data_save)
+
+    hospital_name_3 = re.findall(regex_3, data_save)
+    hospital_name.extend(hospital_name_3)
+    data_save = Remover(regex_3, data_save)
+
+    hospital_name_4 = re.findall(regex_4, data_save)
+    hospital_name.extend(hospital_name_4)
+    data_save = Remover(regex_4, data_save)
+
+    data_save = Remover(regex_5, data_save)
+    data_save = Remover(regex_6, data_save)
+    data_save = Remover(regex_7, data_save)
+
+    hospital_name_8 = re.findall(regex_8, data_save)
+    hospital_name.extend(hospital_name_8)
+    data_save = Remover(regex_8, data_save)
+
+    if len(hospital_name) > 0:
+        return hospital_name[0]
+    else: 
+        return ''
+
+# 사업자 등록번호 관리
+def Registration_Number(data_save):
+    registration_number = []
+    # 사업자 등록번호 : (숫자 10자리)
+    regex_1 = " ?사 ?업 ?자? ?등? ?록? ?번? ?호? ?N?o? ?:? ?(\d\d\d)(\d\d)(\d\d\d\d\d) "
+    # regex_2, 3 는 수정 진행
+    regex_2 = " ?사 ?업 ?자? ?등? ?록? ?번? ?호? ?N?o? ?:? ?(\d{3}) ? ? ?(\d{2}) ?- ?(\d{5})\D"
+    regex_3 = " ?사 ?업 ?자? ?등? ?록? ?번? ?호? ?N?o? ?:? ?(\d{3}) ?- ?(\d{2}) ? ?(\d{5})\D"
+    # 사업자 등록번호 : (숫자3 - 숫자2 - 숫자5)
+    regex_4 = " ?사 ?업 ?자? ?등? ?록? ?번? ?호? ?N?o? ?:? ?(\d{3} ?- ?\d{2} ?- ?\d{5})\D"
+    # 사업자 등록번호 : (숫자3 - 숫자2 - 숫자3 - 숫자2)
+    regex_5 = " ?사 ?업 ?자? ?등? ?록? ?번? ?호? ?N?o? ?:? ?(\d{3} ?- ?\d{2} ?- ?\d{3} ?- ?\d{2})"
+    # 숫자3 - 숫자2 - 숫자5
+    regex_6 = "\D(\d{3} ?- ?\d{2} ?- ?\d{5})\D"
+    regex_7 = "(\d{3} ?- ?\d{2} ?- ?\d{5})\D"
+    # 사업자 등록번호 뽑아내고 남는 찌꺼기 제거
+    regex_8 = " ?사 ?업 ?자 ? ?등? ?록? ?번? ?호? ?-? ?:? ?"
+    regex_9 = " ?등 ?록 ?번 ?호 ?:? ?"
+    # 10자리로 되어있는 사업자 등록번호 및 이레귤러 케이스들 나누어서 저장하게 치환
+    data_save = re.sub(regex_1, r'\1-\2-\3', data_save)
+    data_save = re.sub(regex_2, r'\1-\2-\3', data_save)
+    data_save = re.sub(regex_3, r'\1-\2-\3', data_save)
+
+    registration_number_4 = re.findall(regex_4, data_save)
+    registration_number.extend(registration_number_4)
+    data_save = Remover(regex_4, data_save)
+
+    registration_number_5 = re.findall(regex_5, data_save)
+    registration_number.extend(registration_number_5)
+    data_save = Remover(regex_5, data_save)
+
+    registration_number_6 = re.findall(regex_6, data_save)
+    registration_number.extend(registration_number_6)
+    data_save = Remover(regex_6, data_save)
+
+    registration_number_7 = re.findall(regex_7, data_save)
+    registration_number.extend(registration_number_7)
+    data_save = Remover(regex_7, data_save)
+
+    data_save = Remover(regex_8, data_save)
+    data_save = Remover(regex_9, data_save)
+    
+    if len(registration_number) > 0:
+        return registration_number[0]
+    elif re.search('\d{3}-\d{2}-\d{5}', data_save):
+        return data_save
+    else: 
+        return ''
+
+# 전화번호
+def Phone_Number(data_save):
+    phone_number = []
+    fixed_phone_number_to_list = []
+    fixed_phone_number = ''
+
+    regex_1 = " ?전? ?화? ?번? ?호?:? ?핸? ?드? ?폰? ?:?\D(01[0|6-9][-]?\d{3,4}[-]?\d{4})\D"
+    regex_2 = " ?전? ?화? ?번? ?호? ?:? ?[\(]?\D(0\d{1,2}-\d{3,4}-\d{4})[\)]?"
+    regex_3 = " ?전? ?화 ?번 ?호 ?:? ?[\(\[]?(0\d{1,2}[ -]{0,}\d{3,4}[ -]{0,}\d{4})"
+    regex_4 = " ?전 ?화 ?번 ?호 ?:? ?(\d{3}-\d{4})"
+    regex_5 = " ?전 ?화 ?번 ?호 ?[:;]? ?"
+    regex_6 = " ?[\(\[]? ?T ?E ?L ?[:;]? ?[\d-]+[\)\]]? ?"
+    regex_7 = " ?T ?E ?L ?[\)\]]? ?(\d{2,4}-?\d{2,4})"
+    regex_8 = " [\(\[]? ?T ?E ?L ?[\)\]]? ?"
+
+    phone_number_1 = re.findall(regex_1, data_save)
+    phone_number.extend(phone_number_1)
+    data_save = Remover(regex_1, data_save)
+
+    phone_number_2 = re.findall(regex_2, data_save)
+    phone_number.extend(phone_number_2)
+    data_save = Remover(regex_2, data_save)
+
+    phone_number_3 = re.findall(regex_3, data_save)
+    phone_number.extend(phone_number_3)
+    data_save = Remover(regex_3, data_save)
+
+    phone_number_4 = re.findall(regex_4, data_save)
+    phone_number.extend(phone_number_4)
+    data_save = Remover(regex_4, data_save)
+
+    data_save = Remover(regex_5, data_save)
+
+    phone_number_6 = re.findall(regex_6, data_save)
+    phone_number.extend(phone_number_6)
+    data_save = Remover(regex_6, data_save)
+
+    phone_number_7 = re.findall(regex_7, data_save)
+    phone_number.extend(phone_number_7)
+    data_save = Remover(regex_7, data_save)
+
+    data_save = Remover(regex_8, data_save)
+    try:
+        fixed_phone_number = re.sub(' ?- ?', '', phone_number[0])
+        fixed_phone_number = re.sub(' ', '', fixed_phone_number)
+
+    except:
+        fixed_phone_number = ''
+
+    fixed_phone_number_to_list.append(fixed_phone_number)
+
+    return data_save, fixed_phone_number_to_list
+
+# 영수증 내 주소 수집
+def Address(data_save):
+    address = []
+
+    regex_1 = "가? ?맹? ?점? ? ?주 ?소 ?:? ?[가-힣]{1,}시? ?[가-힣]{1,}구? ?[가-힣]{0,}\d{0,2} ?[동로][가-힣]{0,}\d{0,3}번? ?길? ?\d{0,3} ?\d? ?층? ?-? ?\d?\d?번? ?지?\d{0,} ?층? ?\d{0,}호?"
+    regex_2 = "가? ?맹? ?점? ? ?주 ?소 ?:? ?[\D ]+시 ?\D+구 ?\D+[동로]"
+    regex_3 = "가 ?맹 ?점 ?명? ?:? ?(\D+병 ?원 ?)"
+    regex_4 = " ?\)? ?정? ?상? ?매? ?입? ?가 ?맹 ?점 ?명? ?:? ?정? ?보? ?즉? ?시? ?결? ?제? ?\/? ?사? ?업? ?자? ?2?4?시?\D+병원"
+    regex_5 = "\( ?\D+ ?동 ?\)"
+    ## 도 뒤에 ? 추가, 번?길? 사이에 지? 추가
+    regex_6 = " ?[가-힣]+도? ?[가-힣]+시 ?[가-힣]{0,}구?로?동?번?길? ?[가-힣1-9]{0,}구?로?동?번?길? ?\d?층?"
+
+    address_1 = re.findall(regex_1, data_save)
+    address.extend(address_1)
+    data_save = Remover(regex_1, data_save)
+
+    address_2 = re.findall(regex_2, data_save)
+    address.extend(address_2)
+    data_save = Remover(regex_2, data_save)
+
+    address_3 = re.findall(regex_3, data_save)
+    address.extend(address_3)
+    data_save = Remover(regex_3, data_save)
+
+    address_4 = re.findall(regex_4, data_save)
+    address.extend(address_4)
+    data_save = Remover(regex_4, data_save)
+
+    address_5 = re.findall(regex_5, data_save)
+    address.extend(address_5)
+    data_save = Remover(regex_5, data_save)
+
+    address_6 = re.findall(regex_6, data_save)
+    address.extend(address_6)
+    data_save = Remover(regex_6, data_save)
+
+    #return data_save, address
+    
+    if len(address) > 0:
+        return address[0]
+    else: 
+        return ''
+
+
+###### 진단 정보 ######
+
 # 컬럼 유형에 따른 정규식 컴파일
 
 #  단가 수량 금액
@@ -123,7 +370,7 @@ nope = [aqa, qa, aq, qda, cols, lessormore, toolow]
 
 def get_keywords():
     keys = pd.DataFrame()
-    with open('Keyword.json', 'r', encoding='UTF8') as f:
+    with open('Keyword_updated.json', 'r', encoding='UTF8') as f:
         keywords = json.load(f)
         for i, label in enumerate(keywords.get('진단명')):
             realwords = []
@@ -155,20 +402,36 @@ def parse_receipt_to_json(json_file):
     Satze_dft = data_load_into_df(file_path)
     keys = get_keywords()
 
-    thisreceipt = pd.DataFrame({'receipt': [], 'Name': [], 'Desc': [], 'Quant': [], 'Amount': []})
+    #  추가 정보 DataFrame
+    Text = ' '.join(Satze_dft[ receipt ].values)
+    temp = []
 
-    # 영수증 i       # FOR on Santze_dft[ receipt ]
+    temp.extend( [Registration_Number(Text).strip()] )
+    temp.extend( [Phone_Number(Text)[-1][-1].strip()] )
+    temp.extend( [Address(Text).strip()] )
+    temp.extend( [Hospital_name(Text).strip()] )
+    
+    ##  사업자등록번호, 주소, 전화번호, 병원명 검증 및 새로운 명 반환
+    ver_registration_number, ver_phone_number, ver_address, ver_hospital_name = check_hospital_info(temp)
+    
+    df_info = pd.DataFrame( {'동물병원':[ver_hospital_name], '사업자 번호':[ver_registration_number], '전화번호': [ver_phone_number], '주소':[ver_address]} ).T.rename(columns = {0:''})
 
+    
+    #  진단 내용 DataFrame
+
+    thisreceipt = pd.DataFrame({'영수증 번호':[], '동물명':[], '진단내용':[], '수량':[], '금액':[]})
+    
     Desc = []  # 진단
     Quant = []  # 수량
     Amount = []  # 금액
     Name = []  # 이름
+    petname = ''   # 없는 경우 대비
 
     pet_label = []
 
     compiler_name = typeofcols(receipt)
 
-    for j, satz in enumerate(Satze_dft[receipt].dropna()):  # FOR on Satze_dft[ receipt ][ j ]
+    for j, satz in enumerate(Satze_dft[ receipt ].dropna()):  # FOR on Satze_dft[ receipt ][ j ]
 
         # 진단내역 지난 후의 line일 경우 => 해당 영수증 검수 
         if endhere.search(satz) is not None:
@@ -184,17 +447,12 @@ def parse_receipt_to_json(json_file):
         # 무의미 line 아닌 경우에만
         elif realcolname(satz):
             compiler_name = realcolname(satz)
-            Name, Desc, Quant, Amount = get_NDQA(compiler_name , receipt, j, petname)
+            Name, Desc, Quant, Amount, desc = get_NDQA(compiler_name , receipt, j, petname)
             
             row_label = []
-            row_desc = ''
-
-            # 여러 줄에 흩어져 있는 진단들 한 줄로 모으기 (단어 단위로)
-            for i in rows:
-                row_desc = row_desc + ' ' + Satze_dft[ receipt ][ i ].lower()
-
+            
             # 진단 단어들 => Keywords.json 단어 목록과 비교
-            d = re.sub('\s+', ' ', row_desc)
+            d = re.sub('\s+', ' ', desc)
             
             for realword in list(keys.index):
                 if (realword in d) & (type(keys['label'][realword]) == str):
@@ -206,21 +464,22 @@ def parse_receipt_to_json(json_file):
                             
                 elif (realword in d) & (type(keys['label'][realword]) != str):
                     row_label = row_label + list( keys['label'][realword] )
-
+                        
             pet_label.append(list(set(row_label)))
 
     df_new = pd.DataFrame(
-        {'receipt': [receipt] * len(Desc), 'Name': Name, 'Desc': Desc, 'Quant': Quant, 'Amount': Amount})
+        {'영수증 번호': [receipt]*len(Desc), '동물명': Name, '진단내용' : Desc, '수량':Quant, '금액':Amount})
     thisreceipt = pd.concat([thisreceipt, df_new]).reset_index().iloc[:, 1:]
+    
     labeled_receipt = pd.DataFrame(
-        {'receipt': [receipt] * len(Desc), 'Name': Name, 'Desc': pet_label, 'Quant': Quant, 'Amount': Amount})
-
+        {'영수증 번호': [receipt]*len(Desc), '동물명': Name, '진단내용' : pet_label, '수량':Quant, '금액':Amount})
+    
     print(thisreceipt)
     print(labeled_receipt)
     html = thisreceipt.to_html(justify='center')
     reg_html = labeled_receipt.to_html(justify='center')
 
-    return [html, reg_html]
+    return [html, reg_html] ### <- df_info도 출력 필요 !
 
     # return labeled_df, allreceipt
 
@@ -271,20 +530,20 @@ def withupperline(compiler, receipt, j):
     satz = Satze_dft[ receipt ][ j ]
 
     desc = satz[ : compiler.search(satz).start() ].strip()  # 지금 line j의 진단내용
-    desc = re.sub('[( )]\d*,\d{3}[( ))]', ' ', desc)     # <-- 1) 진단에서 금액부분 제거
+    desc = re.split('[( )]\d*,\d{3}[( ))]', desc)[-1].strip()     # <-- 1) 진단에서 금액부분 제거
     rows.append(j)
 
     # 윗줄의 진단내용 연결
     if upper(compiler, receipt, j - 1):
         upper_line = Satze_dft[receipt][j - 1]
-        upper_line = re.sub('[( )]\d*,\d{3}[( ))]', ' ', upper_line)  # <-- 1) 진단에서 금액부분 제거
+        upper_line = re.split('[( )]\d*,\d{3}[( ))]', upper_line)[-1].strip()  # <-- 1) 진단에서 금액부분 제거
 
         desc = upper_line + ' ' + desc
         rows.append(j - 1)
 
     if upper(compiler, receipt, j - 1) & upper(compiler, receipt, j - 2):
         upper_line = Satze_dft[receipt][j - 2]
-        upper_line = re.sub('[( )]\d*,\d{3}[( ))]', ' ', upper_line)  # <-- 1) 진단에서 금액부분 제거
+        upper_line = re.split('[( )]\d*,\d{3}[( ))]', upper_line)[-1].strip()  # <-- 1) 진단에서 금액부분 제거
 
         desc = upper_line + ' ' + desc
         rows.append(j - 2)
@@ -307,6 +566,8 @@ def get_NDQA(compiler_name, receipt, j, petname):
     
     # 금액 Amount + labeling
     amount = dowhat[ compiler_name ]['compiler'].search(satz).group( dowhat[ compiler_name ]['amount'] )
+    amount = re.sub('[,.]|원', '', amount)
+    amount = str(format( int(amount), ','))
     
     # 진단 Description + labeling
     desc = withupperline( dowhat[ compiler_name ]['compiler'] , receipt, j )
@@ -316,7 +577,7 @@ def get_NDQA(compiler_name, receipt, j, petname):
     Quant.append( quant )
     Amount.append( amount )
     
-    return Name, Desc, Quant, Amount
+    return Name, Desc, Quant, Amount, desc
 
 
 # 영수증의 "컬럼 형식" 파악하고 그에 따라 적합한 [컴파일러 이름] 할당
