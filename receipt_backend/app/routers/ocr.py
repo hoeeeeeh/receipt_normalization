@@ -370,7 +370,7 @@ nope = [aqa, qa, aq, qda, cols, lessormore, toolow]
 
 def get_keywords():
     keys = pd.DataFrame()
-    with open('Keyword_updated.json', 'r', encoding='UTF8') as f:
+    with open('./Keyword_updated.json', 'r', encoding='UTF8') as f:
         keywords = json.load(f)
         for i, label in enumerate(keywords.get('진단명')):
             realwords = []
@@ -476,10 +476,13 @@ def parse_receipt_to_json(json_file):
     
     print(thisreceipt)
     print(labeled_receipt)
+    print(df_info)
     html = thisreceipt.to_html(justify='center')
     reg_html = labeled_receipt.to_html(justify='center')
+    df_info = df_info.to_html(justify='center')
 
-    return [html, reg_html] ### <- df_info도 출력 필요 !
+
+    return [html, reg_html, df_info] ### <- df_info도 출력 필요 !
 
     # return labeled_df, allreceipt
 
