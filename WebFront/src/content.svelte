@@ -145,9 +145,7 @@
         height: 10%;
         box-sizing: border-box;
         border-top: 2px solid #E1E1E1;
-    
         }
-
     #dropzoneWrapper{
         flex: 2;
         display: flex;

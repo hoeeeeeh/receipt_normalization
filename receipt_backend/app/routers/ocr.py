@@ -152,7 +152,7 @@ def parse_receipt_to_json(json_file):
     global Satze_dft, keys
     global this_receipt, Desc, Quant, Amount, Name, image
 
-    Satze_dft, Words_dft = data_load_into_df(file_path)
+    Satze_dft = data_load_into_df(file_path)
     keys = get_keywords()
 
     thisreceipt = pd.DataFrame({'receipt': [], 'Name': [], 'Desc': [], 'Quant': [], 'Amount': []})

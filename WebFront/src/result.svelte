@@ -33,15 +33,20 @@
         document.getElementById("resultTableWrapper_before_reg").innerHTML = $resultData[0]
         document.getElementById("resultTableWrapper_after_reg").innerHTML = $resultData[1]
 
-        document.querySelector(".dataframe").style.cssText = `
-            width: 100%;
-            height: auto;
-            padding: 10px;
-            border-collapse: collapse;
-            border-color: #E1E1E1;
-            font-size: 0.8em;
-            text-align: center;
-        `
+        let dfs = document.querySelectorAll(".dataframe")
+
+        for (let i = 0; i < dfs.length; i++) {
+            let df = dfs.item(i)
+            df.style.cssText = `
+                width: 100%;
+                height: 100%;
+                padding: 10px;
+                border-collapse: collapse;
+                border-color: #E1E1E1;
+                font-size: 0.8em;
+                text-align: center;
+            `
+        }
     }
 
     function ocr1(){
@@ -171,7 +176,7 @@
         padding: 15px;
         flex: 1;
         width: 100%;
-        height: auto;
+        height: 100%;
         flex-flow: column;
         align-items:center;
         justify-content:center;
