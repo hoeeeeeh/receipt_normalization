@@ -330,6 +330,146 @@ def Address(data_save):
         return ''
 
 
+###### 합계 정보 ######
+# 금액관련 중복데이터 및 다중 데이터 발생시 실질데이터를 가장 큰값 혹은 가장 작은 값으로 선택
+def find_one(data):
+    int_data = []
+    result = []
+    size_Type = "min"
+    if len(data) > 0:
+        for i in data:
+            if i != "":
+                try:
+                    ch_int = int(
+                        i.replace(',', '').replace(' ', '').replace('.', '').replace('-', '').replace('/', '').replace(
+                            ':', ''))
+                    int_data.append(ch_int)
+                except ValueError:
+                    continue
+                if ch_int >= 0:
+                    size_Type = "max"
+        if size_Type == "max":
+            if len(int_data) > 0:
+                result.append(format(max(int_data), ','))  # 중복되는 총계 및 잘못된 총계값 필터링을 위해 최대값 추출
+            else:
+                return 0
+        else:
+            if len(int_data) > 0:
+                result.append(format(min(int_data), ','))  # 중복되는 총계 및 잘못된 총계값 필터링을 위해 최솟값 추출 (할인에서 사용)
+            else:
+                return 0
+        return result
+    else:
+        return 0
+
+
+# 합계
+def Total_Sum(data_save):
+    total_sum = []
+    regex_1 = " ?[가-힣]{2,3} ?의 ?합 ?계 ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) [1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3} ?원?"
+    regex_2 = " ?[가-힣]{2,3} ?의 ?합 ?계 ?([1-9]\d{0,2}[,\.]\d{3}) [1-9]\d{0,2}[,\.]\d{3} ?원?"
+    regex_3 = " ?[가-힣]{2,3} ?의 ?합 ?계 ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) ?원?"
+    regex_4 = " ?[가-힣]{2,3} ?의 ?합 ?계 ?([1-9]\d{0,2}[,\.]\d{3}) ?원?"
+    regex_5 = " ?품? ?목? ?결? ?제? ?금? ?액?총? ?포? ?[함암]? ? ?중? ?간? ?합 ?계 ?금? ?액? ?:? ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) ?원?"
+    regex_6 = " ?품? ?목? ?결? ?제? ?금? ?액?총? ?포? ?[함암]? ? ?중? ?간? ?합 ?계 ?금? ?액? ?:? ?([1-9]\d{0,2}[,\.]\d{3}) ?원?"
+    regex_7 = " ?총? ?청? ?구? ?금 ?액 ?:? ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) ?원? ? ?[1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3} ?원?"
+    regex_8 = " ?총? ?청? ?구? ?금 ?액 ?:? ?([1-9]\d{0,2}[,\.]\d{3}) ?원? ? ?[1-9]\d{0,2}[,\.]\d{3} ?원?"
+    regex_9 = " ?총? ?청? ?구? ?금 ?액 ?:? ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) ?원?"
+    regex_10 = " ?총? ?청? ?구? ?금 ?액 ?:? ?([1-9]\d{0,2}[,\.]\d{3}) ?원?"
+    regex_11 = " ?진? Sign ?:? "
+    regex_12 = " ?결 ?제 ?[요예] ?[청정] ?:? ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3})"
+    regex_13 = " ?결 ?제 ?[요예] ?[청정] ?:? ?([1-9]\d{0,2}[,\.]\d{3})"
+    regex_14 = " DC "
+    regex_15 = " ?구? ?분? ?내? ?용? ?일? ?자? ?세? ?부? ?용? ?품? ?내?역? ?품? ?목? ?단? ?가? ? ?수 ?량 금 ?액 ?단? ?가? ?항? ?목? ?"
+    regex_16 = " ?총? ?청? ?구? ?적? ?용? ?금 ?액 ?:?"
+    regex_17 = " ?결? ?제? ?전? ?체? ?품? ?목? ?포? ?함? ?합 ?계 ?:? ? ?0? ?0? ?0?(\d{0,} ?[\d]{0,}[, ]{0,2}\d{0,})원?"
+    regex_18 = " ?\( ?V ?A ?T ? ?포? ?함? ?\) ?([1-9]\d{0,2}[,\.]\d{3}[,\.]\d{3}) ?원?"
+    regex_19 = " ?\( ?V ?A ?T ? ?포? ?함? ?\) ?([1-9]\d{0,2}[,\.]\d{3}) ?원?"
+    regex_20 = " ?\( ?V ?A ?T ? ?포? ?함? ?\) ?([1-9]\d{0,2}) ?원?"
+
+    total_sum_1 = re.findall(regex_1, data_save)
+
+    total_sum.extend(total_sum_1)
+    data_save = Remover(regex_1, data_save)
+
+    total_sum_2 = re.findall(regex_2, data_save)
+    total_sum.extend(total_sum_2)
+    data_save = Remover(regex_2, data_save)
+
+    total_sum_3 = re.findall(regex_3, data_save)
+    total_sum.extend(total_sum_3)
+    data_save = Remover(regex_3, data_save)
+
+    total_sum_4 = re.findall(regex_4, data_save)
+    total_sum.extend(total_sum_4)
+    data_save = Remover(regex_4, data_save)
+
+    total_sum_5 = re.findall(regex_5, data_save)
+    total_sum.extend(total_sum_5)
+    data_save = Remover(regex_5, data_save)
+
+    total_sum_6 = re.findall(regex_6, data_save)
+    total_sum.extend(total_sum_6)
+    data_save = Remover(regex_6, data_save)
+
+    total_sum_7 = re.findall(regex_7, data_save)
+    total_sum.extend(total_sum_7)
+    data_save = Remover(regex_7, data_save)
+
+    total_sum_8 = re.findall(regex_8, data_save)
+    total_sum.extend(total_sum_8)
+    data_save = Remover(regex_8, data_save)
+
+    total_sum_9 = re.findall(regex_9, data_save)
+    total_sum.extend(total_sum_9)
+    data_save = Remover(regex_9, data_save)
+
+    total_sum_10 = re.findall(regex_10, data_save)
+    total_sum.extend(total_sum_10)
+    data_save = Remover(regex_10, data_save)
+
+    data_save = Remover(regex_11, data_save)
+
+    total_sum_12 = re.findall(regex_12, data_save)
+    total_sum.extend(total_sum_12)
+    data_save = Remover(regex_12, data_save)
+
+    total_sum_13 = re.findall(regex_13, data_save)
+    total_sum.extend(total_sum_13)
+    data_save = Remover(regex_13, data_save)
+
+    data_save = Remover(regex_14, data_save)
+    data_save = Remover(regex_15, data_save)
+    data_save = Remover(regex_16, data_save)
+
+    total_sum_17 = re.findall(regex_17, data_save)
+    total_sum.extend(total_sum_17)
+    data_save = Remover(regex_17, data_save)
+
+    total_sum_18 = re.findall(regex_18, data_save)
+    total_sum.extend(total_sum_18)
+    data_save = Remover(regex_18, data_save)
+
+    total_sum_19 = re.findall(regex_19, data_save)
+    total_sum.extend(total_sum_19)
+    data_save = Remover(regex_19, data_save)
+
+    total_sum_20 = re.findall(regex_20, data_save)
+    total_sum.extend(total_sum_20)
+    data_save = Remover(regex_20, data_save)
+
+    # 총계 금액으로 선택된 데이터들 중 가장 큰 금액 선택
+    find_total_sum = find_one(total_sum)
+    if find_total_sum != 0:
+        total_sum = find_total_sum
+    
+    # 총계 금액이 없을 경우 빈 문자열 출력
+    if len(total_sum) > 0:
+        return total_sum[0]
+    else: 
+        return ''
+
+
 ###### 진단 정보 ######
 
 # 컬럼 유형에 따른 정규식 컴파일
@@ -402,7 +542,7 @@ def parse_receipt_to_json(json_file):
     Satze_dft = data_load_into_df(file_path)
     keys = get_keywords()
 
-    #  추가 정보 DataFrame
+    #   병원 정보 DataFrame
     Text = ' '.join(Satze_dft[ receipt ].values)
     temp = []
 
@@ -416,8 +556,13 @@ def parse_receipt_to_json(json_file):
     
     df_info = pd.DataFrame( {'동물병원':[ver_hospital_name], '사업자 번호':[ver_registration_number], '전화번호': [ver_phone_number], '주소':[ver_address]} ).T.rename(columns = {0:''})
 
+    #   합계 정보 추출
+    total = Total_Sum(Text)
+
+    total_info = pd.DataFrame( {'합계' : [ total ]}).T.rename(columns = { 0 : '' })
+
     
-    #  진단 내용 DataFrame
+    #   진단 내용 DataFrame
 
     thisreceipt = pd.DataFrame({'영수증 번호':[], '동물명':[], '진단내용':[], '수량':[], '금액':[]})
     
@@ -481,7 +626,7 @@ def parse_receipt_to_json(json_file):
     df_info = df_info.to_html(justify='center')
 
 
-    return [html, reg_html, df_info] ### <- df_info도 출력 필요 !
+    return [html, reg_html, df_info, total_info] 
 
     # return labeled_df, allreceipt
 
