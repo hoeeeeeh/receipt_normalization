@@ -532,7 +532,7 @@ def withupperline(compiler, receipt, j):
     satz = Satze_dft[ receipt ][ j ]
 
     desc = satz[ : compiler.search(satz).start() ].strip()  # 지금 line j의 진단내용
-    desc = re.split('[( )]\d*,\d{3}[( ))]', desc)[-1].strip()     # <-- 1) 진단에서 금액부분 제거
+    # desc = re.split('[( )]\d*,\d{3}[( ))]', desc)[-1].strip()     # <-- 1) 진단에서 금액부분 제거
     rows.append(j)
 
     # 윗줄의 진단내용 연결
