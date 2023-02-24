@@ -438,7 +438,6 @@ def parse_receipt_to_json(json_file):
             break
             
         # 1) 동물 이름
-        petname = ''   # 없는 경우 대비
         if re.search( name_type , satz):
             matched = name.search(satz).group()
             petname = re.sub(  '.*동물(명|이름) ?:? ?|^\(|\(|[a-zA-Z]* ?\[\d{8,9}\]?'  , '', matched  ).strip() 
