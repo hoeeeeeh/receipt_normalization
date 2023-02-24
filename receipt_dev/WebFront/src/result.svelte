@@ -20,14 +20,6 @@
         document.querySelectorAll('.resultTableWrapper').forEach((item) => {
             removeAllChildNodes(item);
         })
-
-        document.querySelectorAll('#resultAmountTableWrapper').forEach((item) => {
-            removeAllChildNodes(item);
-        })
-
-        document.querySelectorAll('#resultInfoTableWrapper').forEach((item) => {
-            removeAllChildNodes(item);
-        })
     }
     //window.onload = agreementsDetection;
 
@@ -38,12 +30,11 @@
 
     function ocr(){
         console.log($resultData)
-        document.getElementById("resultTableWrapper_before_reg").innerHTML = '<div><p>정규화 전</p></div>' + $resultData[0]
-        document.getElementById("resultTableWrapper_after_reg").innerHTML = '<div><p>정규화 후</p></div>' + $resultData[1]
+        document.getElementById("resultTableWrapper_before_reg").innerHTML += $resultData[0]
+        document.getElementById("resultTableWrapper_after_reg").innerHTML += $resultData[1]
         document.getElementById("resultInfoTableWrapper").innerHTML = $resultData[2]
         document.getElementById("resultAmountTableWrapper").innerHTML = $resultData[3]
-        
-        
+    
 
         let dfs = document.querySelectorAll(".resultTableWrapper")
 
@@ -63,11 +54,6 @@
 
         let info_thead = document.querySelector("#resultInfoTableWrapper table thead");
         info_thead.style = `
-            display: none;
-        `
-
-        let amount_thead = document.querySelector("#resultAmountTableWrapper table thead");
-        amount_thead.style = `
             display: none;
         `
     }
@@ -165,11 +151,17 @@
     <div class='resultContentWrapper'>
         <div id="resultInfoTableWrapper" class="resultInfoTableWrapper"></div>
         <div id="resultTableWrapper_before_reg" class="resultTableWrapper">
+            <div>
+                <p>정규화 전</p>
+            </div>
         </div>
         <div id="resultTableWrapper_after_reg" class="resultTableWrapper">
+            <div>
+                <p>정규화 후</p>
+            </div>
         </div>
-        <div id="resultAmountTableWrapper" class="resultAmountTableWrapper">
-        </div>
+
+        <div id="resultAmountTableWrapper" class="resultAmountTableWrapper"></div>
     </div>
 </div>
 

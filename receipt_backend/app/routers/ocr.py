@@ -617,13 +617,18 @@ def parse_receipt_to_json(json_file):
     
     labeled_receipt = pd.DataFrame(
         {'영수증 번호': [receipt]*len(Desc), '동물명': Name, '진단내용' : pet_label, '수량':Quant, '금액':Amount})
-    
+
     print(thisreceipt)
     print(labeled_receipt)
     print(df_info)
+
+
     html = thisreceipt.to_html(justify='center')
+
     reg_html = labeled_receipt.to_html(justify='center')
     df_info = df_info.to_html(justify='center')
+
+    total_info = total_info.to_html(justify='center')
 
 
     return [html, reg_html, df_info, total_info] 
