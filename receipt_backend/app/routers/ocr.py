@@ -464,7 +464,7 @@ def parse_receipt_to_json(json_file):
                 elif (realword in d) & (type(keys['label'][realword]) != str):
                     row_label = row_label + list( keys['label'][realword] )
                         
-            pet_label.append(list(set(row_label)))
+            pet_label.append(', '.join(set(row_label)))
 
     df_new = pd.DataFrame(
         {'영수증 번호': [receipt]*len(Desc), '동물명': Name, '진단내용' : Desc, '수량':Quant, '금액':Amount})
