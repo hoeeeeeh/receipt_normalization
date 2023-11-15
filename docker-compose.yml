@@ -1,11 +1,10 @@
 version: "3"
 services:
-  #front 
   front:
-    #image: receipt:front
-    build:
-      context: WebFront
-      dockerfile: ./Dockerfile
+    image: kuploy/receipt-front
+    # build:
+    #   context: WebFront
+    #   dockerfile: ./Dockerfile
     restart: always
     container_name : receipt-front
     ports:
@@ -15,10 +14,10 @@ services:
     
 
   backend:
-    #image: receipt-backend
-    build:
-      context: receipt_backend
-      dockerfile: ./Dockerfile
+    image: kuploy/receipt-backend
+    # build:
+    #   context: receipt_backend
+    #   dockerfile: ./Dockerfile
     restart: always
     container_name : receipt-backend
     ports:
