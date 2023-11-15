@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    kompose.cmd: kompose -f docker-compose.yml --namespace=hoeeeeeh --controller statefulset convert
+    kompose.version: 1.31.0 (a04ecdb9e)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: front
+  name: front
+  namespace: hoeeeeeh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: front
+  serviceName: front
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.network/receipt-normalization-receipt: "true"
+        io.kompose.service: front
+    spec:
+      containers:
+        - image: kuploy/receipt-front
+          name: receipt-front
+          ports:
+            - containerPort: 6001
+              hostPort: 6001
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+  updateStrategy: {}
+status:
+  availableReplicas: 0
+  replicas: 0
