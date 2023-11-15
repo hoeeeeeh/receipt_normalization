@@ -1,0 +1,19 @@
+name: Kompose Convert on Main Branch
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  kompose-convert:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    # Add additional steps here to deploy the generated Kubernetes resources.
+    - name: CI Completed
+      run:  |
+        curl -H "Content-Type: application/json" -d '{ "repositoryName": "receipt_normalization", "githubUsername": "hoeeeeeh"}' -X POST http://kluster.iptime.org:9001/github/action-completed
